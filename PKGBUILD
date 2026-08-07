@@ -1,6 +1,6 @@
 # Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
 
-pkgbase=linux
+pkgbase=linux-custom
 pkgver=7.1.7.arch1
 pkgrel=1
 pkgdesc='Linux'
@@ -31,21 +31,22 @@ makedepends=(
   zstd
 
   # htmldocs
-  graphviz
-  imagemagick
-  python-sphinx
-  python-yaml
-  texlive-latexextra
+  #graphviz
+  #imagemagick
+  #python-sphinx
+  #python-yaml
+  #texlive-latexextra
 )
 options=(
   !debug
   !strip
 )
-_srcname=linux-${pkgver%.*}
+_srcname=linux
 _srctag=v${pkgver%.*}-${pkgver##*.}
 source=(
-  https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.{xz,sign}
-  $url/releases/download/$_srctag/linux-$_srctag.patch.zst{,.sig}
+  "git+https://github.com/archlinux/linux.git?signed#tag=${_srctag}"
+  "00-setlocalversion-nodirty.patch"
+  "10-allow-rust-with-lto.patch"
 )
 source_x86_64=(config.x86_64)
 validpgpkeys=(
@@ -53,21 +54,19 @@ validpgpkeys=(
   647F28654894E3BD457199BE38DBBDC86092693E  # Greg Kroah-Hartman
   83BC8889351B5DEBBB68416EB8AC08600F108CDF  # Jan Alexander Steffens (heftig)
 )
-b2sums=('1a1884d4ac6e5b2a49b5f4835635c47b33552568a01b2cd65186a252da00e0578af2830c60a88208ec0834f718779815663dd7be148903b58f72e22ac8673e94'
-        'SKIP'
-        'f3c197f565e52a2b692798c0afcc2e783e504fe8fe34303c39ed50c374b81d98f8d4b38ef8e99cc37cd7ad9e7fa4d122a961b16b8cc20f80f8af6f59b3123aea'
-        'SKIP')
-b2sums_x86_64=('f40d27145e8c0961080cf0d9c219db937352e58cf06f844443a8951cd16d33c5f17f708b188454118fb5dc1a97492c39d6645d4f3a98dc0680fd5c949e17a3d3')
-
-# https://www.kernel.org/pub/linux/kernel/v7.x/sha256sums.asc
-sha256sums=('ca8f2a6884a4d62043e9ab93ac1ab15efc2b6630fe8f768b2ef2ffdf4b5e26df'
-            'SKIP'
-            '927ad110156cb3491defb466954b2ea543cdd7fb8b2d34681b8089b7fa38584b'
-            'SKIP')
+b2sums=(
+  'SKIP'
+  '385515eaaf3d4007f2758a89ee693e2c3c5a949dd5b72baa4991fb1809f32bb0277e1eb68f8c2ab297be79a2e3b56103f8da30324cd2817fe65149a7d7d1a6f3'
+  '30958330df0bb1bc02a4878905ee97e7880b370a5f4cf3e76cc73f8f4b66b4259246998b4a7bc971e8e5f8dc88ee3e200779a9e974bf80b2fd80a54f7fa89075'
+)
+b2sums_x86_64=('ad1bb940212e9d551a60010d0d32e6f7a021b16a3954e4cc61a9b3c299548a00da6d88a405ca42e18926128f0b11d7688fb688dfc6f881c8b380a2cec3c536a3')
 
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=$pkgbase
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+
+export LLVM=1
+export LOCALVERSION_NODIRTY=1
 
 prepare() {
   cd $_srcname
@@ -89,7 +88,7 @@ prepare() {
   echo "Setting config..."
   cp ../config.$CARCH .config
   make olddefconfig
-  diff -u ../config.$CARCH .config || :
+  #diff -u ../config.$CARCH .config || :
 
   make -s kernelrelease > version
   echo "Prepared $pkgbase version $(<version)"
@@ -98,12 +97,12 @@ prepare() {
 build() {
   cd $_srcname
 
-  make htmldocs SPHINXOPTS=-QT &
-  local pid_docs=$!
+  #make htmldocs SPHINXOPTS=-QT &
+  #local pid_docs=$!
 
   make all
   make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
-  wait $pid_docs
+  #wait $pid_docs
 }
 
 _package() {
@@ -286,7 +285,7 @@ _package-docs() {
 pkgname=(
   "$pkgbase"
   "$pkgbase-headers"
-  "$pkgbase-docs"
+  #"$pkgbase-docs"
 )
 for _p in "${pkgname[@]}"; do
   eval "package_$_p() {
