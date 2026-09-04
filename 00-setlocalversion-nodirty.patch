@@ -1,0 +1,13 @@
+diff --git a/scripts/setlocalversion b/scripts/setlocalversion
+index 28169d7e143b..daf66d1742ba 100755
+--- a/scripts/setlocalversion
++++ b/scripts/setlocalversion
+@@ -131,7 +131,7 @@ scm_version()
+ 		printf '%s%.12s' -g "$head"
+ 	fi
+ 
+-	if ${no_dirty}; then
++	if ${no_dirty} || [ "${LOCALVERSION_NODIRTY+set}" = "set" ]; then
+ 		return
+ 	fi
+ 
